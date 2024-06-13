@@ -1,7 +1,6 @@
 import os
 import pymongo
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,14 +14,14 @@ db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
 def aggregate_payments(dt_from, dt_upto, group_type):
-    dt_from = datetime.fromisoformat(dt_from).replace(tzinfo=pytz.UTC)
-    dt_upto = datetime.fromisoformat(dt_upto).replace(tzinfo=pytz.UTC)
+    dt_from = datetime.fromisoformat(dt_from)
+    dt_upto = datetime.fromisoformat(dt_upto)
 
     pipeline = []
 
     if group_type == "hour":
         pipeline = [
-            {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
+            {"$match": {"dt": {"$gte": dt_from, "$lte": dt_upto}}},
             {"$group": {
                 "_id": {
                     "$dateToString": {
@@ -36,7 +35,7 @@ def aggregate_payments(dt_from, dt_upto, group_type):
         ]
     elif group_type == "day":
         pipeline = [
-            {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
+            {"$match": {"dt": {"$gte": dt_from, "$lte": dt_upto}}},
             {"$group": {
                 "_id": {
                     "$dateToString": {
@@ -50,7 +49,7 @@ def aggregate_payments(dt_from, dt_upto, group_type):
         ]
     elif group_type == "month":
         pipeline = [
-            {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
+            {"$match": {"dt": {"$gte": dt_from, "$lte": dt_upto}}},
             {"$group": {
                 "_id": {
                     "$dateToString": {
