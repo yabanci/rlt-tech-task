@@ -19,6 +19,7 @@ def aggregate_payments(dt_from, dt_upto, group_type):
     dt_upto = datetime.fromisoformat(dt_upto).replace(tzinfo=pytz.UTC)
 
     pipeline = []
+
     if group_type == "hour":
         pipeline = [
             {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
@@ -39,7 +40,7 @@ def aggregate_payments(dt_from, dt_upto, group_type):
             {"$group": {
                 "_id": {
                     "$dateToString": {
-                        "format": "%Y-%m-%d",
+                        "format": "%Y-%m-%dT00:00:00",
                         "date": "$dt"
                     }
                 },
@@ -53,7 +54,7 @@ def aggregate_payments(dt_from, dt_upto, group_type):
             {"$group": {
                 "_id": {
                     "$dateToString": {
-                        "format": "%Y-%m-01",
+                        "format": "%Y-%m-01T00:00:00",
                         "date": "$dt"
                     }
                 },
