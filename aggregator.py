@@ -1,6 +1,6 @@
 import os
 import pymongo
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -65,15 +65,27 @@ def aggregate_payments(dt_from, dt_upto, group_type):
         raise ValueError("Invalid group_type")
 
     result = list(collection.aggregate(pipeline))
-    dataset = [entry["total"] for entry in result]
-    labels = [entry["_id"] for entry in result]
+    dataset = []
+    labels = []
+
+    label_index = {entry["_id"]: idx for idx, entry in enumerate(result)}
+
+    current_date = dt_from
+    while current_date < dt_upto:
+        formatted_date = current_date.strftime("%Y-%m-%dT%H:00:00" if group_type == "hour" else "%Y-%m-%dT00:00:00")
+        labels.append(formatted_date)
+        if formatted_date in label_index:
+            dataset.append(result[label_index[formatted_date]]["total"])
+        else:
+            dataset.append(0)
+        current_date = current_date + timedelta(hours=1) if group_type == "hour" else current_date + timedelta(days=1)
 
     return {"dataset": dataset, "labels": labels}
 
 if __name__ == "__main__":
-    dt_from = "2022-09-01T00:00:00"
-    dt_upto = "2022-12-31T23:59:00"
-    group_type = "month"
+    dt_from = "2022-10-01T00:00:00"
+    dt_upto = "2022-11-30T23:59:00"
+    group_type = "day"
 
     result = aggregate_payments(dt_from, dt_upto, group_type)
     print(result)
