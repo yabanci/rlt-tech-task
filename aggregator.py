@@ -1,12 +1,16 @@
+import os
 import pymongo
 from datetime import datetime, timedelta
 import pytz
-from os import getenv
+from dotenv import load_dotenv
 
-DATABASE_NAME = getenv('DATABASE_NAME')
-COLLECTION_NAME = getenv('COLLECTION_NAME')
+load_dotenv()
 
-client = pymongo.MongoClient("mongodb://localhost:27017/")
+DATABASE_NAME = os.getenv("DATABASE_NAME")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
+DB_URL = os.getenv("DB_URL")
+
+client = pymongo.MongoClient(DB_URL)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 

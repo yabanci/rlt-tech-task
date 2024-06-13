@@ -1,10 +1,14 @@
 import logging
 import json
-from os import getenv
-from aiogram import Bot, Dispatcher, types, executor
+import asyncio
+import os
+from dotenv import load_dotenv
+from aiogram import Bot, Dispatcher, types
 from aggregator import aggregate_payments
 
-API_TOKEN = getenv("API_TOKEN")
+load_dotenv()
+
+API_TOKEN = os.getenv("API_TOKEN")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,5 +32,13 @@ async def handle_message(message: types.Message):
     except Exception as e:
         await message.reply(f"Error: {e}")
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+def start_bot():
+    loop = asyncio.get_event_loop()
+    try:
+        loop.create_task(dp.start_polling())
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        loop.stop()
+        loop.close()
