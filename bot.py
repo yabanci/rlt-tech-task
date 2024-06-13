@@ -13,7 +13,7 @@ API_TOKEN = os.getenv("API_TOKEN")
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
@@ -33,12 +33,4 @@ async def handle_message(message: types.Message):
         await message.reply(f"Error: {e}")
 
 def start_bot():
-    loop = asyncio.get_event_loop()
-    try:
-        loop.create_task(dp.start_polling())
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        loop.stop()
-        loop.close()
+    dp.run_polling(bot)
