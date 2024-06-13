@@ -24,9 +24,9 @@ async def send_welcome(message: types.Message):
 async def handle_message(message: types.Message):
     try:
         data = json.loads(message.text)
-        dt_from = data['dt_from']
-        dt_upto = data['dt_upto']
-        group_type = data['group_type']
+        dt_from = data["dt_from"]
+        dt_upto = data["dt_upto"]
+        group_type = data["group_type"]
         
         result = aggregate_payments(dt_from, dt_upto, group_type)
         await message.reply(json.dumps(result))

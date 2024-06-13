@@ -17,43 +17,63 @@ collection = db[COLLECTION_NAME]
 def aggregate_payments(dt_from, dt_upto, group_type):
     dt_from = datetime.fromisoformat(dt_from).replace(tzinfo=pytz.UTC)
     dt_upto = datetime.fromisoformat(dt_upto).replace(tzinfo=pytz.UTC)
-    
-    if group_type == 'hour':
-        group_by = {
-            '$dateToString': {
-                'format': '%Y-%m-%dT%H:00:00',
-                'date': '$timestamp'
-            }
-        }
-        interval = timedelta(hours=1)
-    elif group_type == 'day':
-        group_by = {
-            '$dateToString': {
-                'format': '%Y-%m-%dT00:00:00',
-                'date': '$timestamp'
-            }
-        }
-        interval = timedelta(days=1)
-    elif group_type == 'month':
-        group_by = {
-            '$dateToString': {
-                'format': '%Y-%m-01T00:00:00',
-                'date': '$timestamp'
-            }
-        }
-        interval = timedelta(days=30)  # approximate
+
+    pipeline = []
+    if group_type == "hour":
+        pipeline = [
+            {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
+            {"$group": {
+                "_id": {
+                    "$dateToString": {
+                        "format": "%Y-%m-%dT%H:00:00",
+                        "date": "$dt"
+                    }
+                },
+                "total": {"$sum": "$value"}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+    elif group_type == "day":
+        pipeline = [
+            {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
+            {"$group": {
+                "_id": {
+                    "$dateToString": {
+                        "format": "%Y-%m-%d",
+                        "date": "$dt"
+                    }
+                },
+                "total": {"$sum": "$value"}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+    elif group_type == "month":
+        pipeline = [
+            {"$match": {"dt": {"$gte": dt_from, "$lt": dt_upto}}},
+            {"$group": {
+                "_id": {
+                    "$dateToString": {
+                        "format": "%Y-%m-01",
+                        "date": "$dt"
+                    }
+                },
+                "total": {"$sum": "$value"}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
     else:
         raise ValueError("Invalid group_type")
 
-    pipeline = [
-        {'$match': {'timestamp': {'$gte': dt_from, '$lt': dt_upto}}},
-        {'$group': {'_id': group_by, 'total': {'$sum': '$amount'}}},
-        {'$sort': {'_id': 1}}
-    ]
-    
     result = list(collection.aggregate(pipeline))
-    
-    dataset = [r['total'] for r in result]
-    labels = [r['_id'] for r in result]
-    
-    return {'dataset': dataset, 'labels': labels}
+    dataset = [entry["total"] for entry in result]
+    labels = [entry["_id"] for entry in result]
+
+    return {"dataset": dataset, "labels": labels}
+
+if __name__ == "__main__":
+    dt_from = "2022-09-01T00:00:00"
+    dt_upto = "2022-12-31T23:59:00"
+    group_type = "month"
+
+    result = aggregate_payments(dt_from, dt_upto, group_type)
+    print(result)
