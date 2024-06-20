@@ -69,6 +69,12 @@ def aggregate_payments(dt_from, dt_upto, group_type):
     label_index = {entry["_id"]: idx for idx, entry in enumerate(result)}
 
     current_date = dt_from
+    group_type_to_timedelta = {
+        "hour": timedelta(hours=1),
+        "day": timedelta(days=1),
+        "month": timedelta(months=1),
+    }
+
     while current_date < dt_upto:
         formatted_date = current_date.strftime(
             "%Y-%m-%dT%H:00:00" if group_type == "hour" else "%Y-%m-%dT00:00:00"
@@ -78,10 +84,6 @@ def aggregate_payments(dt_from, dt_upto, group_type):
             dataset.append(result[label_index[formatted_date]]["total"])
         else:
             dataset.append(0)
-        current_date = (
-            current_date + timedelta(hours=1)
-            if group_type == "hour"
-            else current_date + timedelta(days=1)
-        )
+        current_date += group_type_to_timedelta[group_type]
 
     return {"dataset": dataset, "labels": labels}
